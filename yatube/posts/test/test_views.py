@@ -32,21 +32,21 @@ class PostViewTests(TestCase):
             content=small_gif,
             content_type='image/gif'
         )
-        cls.user = User.objects.create_user(username='Test')
+        cls.user = User.objects.create_user(username='leo')
         cls.group = Group.objects.create(
-            title='Test title',
-            slug='Test slug',
-            description='Test description'
+            title='Группа поклонников графа',
+            slug='tolstoi',
+            description='Что-то о группе'
         )
         cls.post = Post.objects.create(
             author=cls.user,
-            text='Test text',
+            text='Война и мир изначально назывался «1805 год»',
             group=cls.group,
             image=uploaded
         )
         cls.comment_post = Comment.objects.create(
             author=cls.user,
-            text='Test text',
+            text='А мне только битвы запомнились»',
             post=cls.post
         )
 
@@ -205,7 +205,7 @@ class PostViewTests(TestCase):
     def test_follow(self):
         """Тестирование подписки на автора."""
         count_follow = Follow.objects.count()
-        new_author = User.objects.create(username='Test')
+        new_author = User.objects.create(username='Lermontov')
         self.authorized_client.get(
             reverse(
                 'posts:profile_follow',
@@ -220,7 +220,7 @@ class PostViewTests(TestCase):
     def test_unfollow(self):
         """Тестирование отписки от автора."""
         count_follow = Follow.objects.count()
-        new_author = User.objects.create(username='Test')
+        new_author = User.objects.create(username='Lermontov')
         self.authorized_client.get(
             reverse(
                 'posts:profile_follow',
@@ -238,7 +238,7 @@ class PostViewTests(TestCase):
 
     def test_following_posts(self):
         """Тестирование появления поста автора в ленте подписчика."""
-        new_user = User.objects.create(username='Test')
+        new_user = User.objects.create(username='Lermontov')
         authorized_client = Client()
         authorized_client.force_login(new_user)
         authorized_client.get(
@@ -255,7 +255,7 @@ class PostViewTests(TestCase):
 
     def test_unfollowing_posts(self):
         """Тестирование отсутствия поста автора у нового пользователя."""
-        new_user = User.objects.create(username='Test')
+        new_user = User.objects.create(username='Lermontov')
         authorized_client = Client()
         authorized_client.force_login(new_user)
         response_unfollow = authorized_client.get(

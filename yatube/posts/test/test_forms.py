@@ -1,6 +1,5 @@
 import shutil
 import tempfile
-
 from django.test import TestCase, Client, override_settings
 from ..models import Post, Group
 from django.contrib.auth import get_user_model
@@ -64,29 +63,25 @@ class PostFormTests(TestCase):
         self.assertEqual(post.text, form_data['text'])
         self.assertEqual(post.author, PostFormTests.user)
 
-    def test_edit_post(self):
-        """Валидная форма редактирует запись в Post."""
+    def test_post_edit(self):
         form_data = {
-            'text': 'Измененный пост',
-            'group': PostFormTests.group.pk,
+            'text': 'Отредактированный текст поста',
+            'group': self.group.id
         }
         response = self.authorized_client.post(
-            reverse(
-                'posts:post_edit',
-                kwargs={'post_id': PostFormTests.post.pk}
-            ),
+            reverse('posts:post_edit', args=[self.post.pk]),
             data=form_data,
             follow=True
         )
-        post = Post.objects.get(pk=PostFormTests.post.pk)
-        self.assertRedirects(response, reverse(
-            'posts:post_detail', kwargs={'post_id': PostFormTests.post.pk}
-        ))
-        self.assertEqual(
-            post.text,
-            form_data['text']
+        self.assertRedirects(
+            response,
+            reverse('posts:post_detail', args=[self.post.id])
         )
-        self.assertEqual(
-            post.group.pk,
-            form_data['group']
+        self.assertTrue(
+            Post.objects.filter(
+                text=form_data['text'],
+                group=self.group.id,
+                id=self.post.id,
+                author=PostFormTests.user,
+            ).exists()
         )
