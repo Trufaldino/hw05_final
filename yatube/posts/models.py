@@ -1,6 +1,6 @@
-from django.db import models
-from django.contrib.auth import get_user_model
 from core.models import CreatedModel
+from django.contrib.auth import get_user_model
+from django.db import models
 
 User = get_user_model()
 
@@ -39,6 +39,11 @@ class Post(CreatedModel):
         upload_to='posts/',
         blank=True,
         help_text='Загрузите сюда вашу картинку'
+    )
+    pub_date = models.DateTimeField(
+        'Дата публикации',
+        auto_now_add=True,
+        db_index=True
     )
 
     class Meta:
@@ -79,3 +84,16 @@ class Follow(CreatedModel):
         on_delete=models.CASCADE,
         related_name='following'
     )
+
+    class Meta():
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author', 'user'],
+                name='unique follow'
+            ),
+        ]
+
+    def __str__(self):
+        return f'Подписка на {self.author}'

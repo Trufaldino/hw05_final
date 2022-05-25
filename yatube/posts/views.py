@@ -1,18 +1,27 @@
-from django.core.paginator import Paginator
-from django.shortcuts import render, get_object_or_404
-from . models import Post, Group, User, Follow, Comment
-from . forms import PostForm, CommentForm
-from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.cache import cache_page
+
+from .forms import CommentForm, PostForm
+from .models import Comment, Follow, Group, Post, User
+
+SYMBOLS_PER_PAGE = 10
 
 
+def paginator(request, post_list):
+    paginator = Paginator(post_list, SYMBOLS_PER_PAGE)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return page_obj
+
+
+@cache_page(20, key_prefix='index_page')
 def index(request):
     template = 'posts/index.html'
     title = 'Последние обновления на сайте'
     post_list = Post.objects.all()
-    paginator = Paginator(post_list, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator(request, post_list)
     context = {
         'title': title,
         'page_obj': page_obj,
@@ -24,9 +33,7 @@ def group_posts(request, slug):
     template = 'posts/group_list.html'
     group = get_object_or_404(Group, slug=slug)
     post_list = group.posts.all()
-    paginator = Paginator(post_list, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator(request, post_list)
     context = {
         'group': group,
         'page_obj': page_obj,
@@ -41,9 +48,7 @@ def profile(request, username):
     if request.user.is_authenticated:
         following = request.user.follower.filter(author=author).exists()
     post_list = author.posts.all()
-    paginator = Paginator(post_list, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator(request, post_list)
     context = {
         'author': author,
         'page_obj': page_obj,
@@ -119,10 +124,8 @@ def add_comment(request, post_id):
 def follow_index(request):
     template = 'posts/follow.html'
     title = 'Публикации избранных авторов'
-    posts = Post.objects.filter(author__following__user=request.user)
-    paginator = Paginator(posts, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    post_list = Post.objects.filter(author__following__user=request.user)
+    page_obj = paginator(request, post_list)
     context = {
         'title': title,
         'page_obj': page_obj,

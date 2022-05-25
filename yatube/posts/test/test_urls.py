@@ -1,9 +1,11 @@
-from django.test import TestCase, Client
-from ..models import Post, Group
-from django.contrib.auth import get_user_model
-from django.urls import reverse
 from http import HTTPStatus
+
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.test import Client, TestCase
+from django.urls import reverse
+
+from ..models import Group, Post
 
 User = get_user_model()
 
@@ -212,3 +214,8 @@ class PostURLTests(TestCase):
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
+
+    def test_error404_page(self):
+        response = self.client.get('/nonexist-page/')
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, 'core/404.html')

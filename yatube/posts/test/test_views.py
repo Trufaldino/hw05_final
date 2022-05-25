@@ -1,13 +1,15 @@
-from django.test import TestCase, Client, override_settings
-from django.core.files.uploadedfile import SimpleUploadedFile
-from ..models import Post, Group, Comment, Follow
-from django.contrib.auth import get_user_model
-from django.urls import reverse
-from django import forms
 import shutil
 import tempfile
+
+from django import forms
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client, TestCase, override_settings
+from django.urls import reverse
+
+from ..models import Comment, Follow, Group, Post
 
 User = get_user_model()
 
@@ -263,3 +265,27 @@ class PostViewTests(TestCase):
         )
         context_unfollow = response_unfollow.context
         self.assertEqual(len(context_unfollow['page_obj']), 0)
+
+    def test_index_caches(self):
+        """Тестирование кэша главной страницы."""
+        new_post = Post.objects.create(
+            author=PostViewTests.user,
+            text='Этот пост создан быть удаленным)',
+            group=PostViewTests.group
+        )
+        response_1 = self.authorized_client.get(
+            reverse('posts:index')
+        )
+        response_content_1 = response_1.content
+        new_post.delete()
+        response_2 = self.authorized_client.get(
+            reverse('posts:index')
+        )
+        response_content_2 = response_2.content
+        self.assertEqual(response_content_1, response_content_2)
+        cache.clear()
+        response_3 = self.authorized_client.get(
+            reverse('posts:index')
+        )
+        response_content_3 = response_3.content
+        self.assertNotEqual(response_content_2, response_content_3)
